@@ -24,11 +24,6 @@ class Bot(commands.Bot):
         for extension in extensions:
             await self.load_extension(extension)
 
-
-
-async def setup_cogs(bot: commands.Bot):
-    await bot.add_cog(Music(bot))
-
 def main():
     from discord_token import token
 

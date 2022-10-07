@@ -28,12 +28,14 @@ class Radio(commands.Cog):
 
     @commands.command()
     async def info(self, ctx):
+        """Available radio list"""
+
         radios = '\n'.join(self.now_plays.keys())
         await ctx.send(f'\n{radios}')
 
     @commands.command()
     async def play(self, ctx, *, radio: str = None):
-        """Plays a file from the local filesystem"""
+        """<Radio name> Plays radio"""
 
         if radio and radio in self.now_plays:
             params = '&'.join(['='.join(x) for x in STATIONS[radio].station_address.params.items()])
@@ -63,6 +65,7 @@ class Radio(commands.Cog):
     @commands.command()
     async def stop(self, ctx):
         """Stops and disconnects the bot from voice"""
+
         channel = ctx.message.channel.id
         for station in self.now_plays.keys():
             for i in range(len(self.now_plays[station]['channels'])):
