@@ -1,6 +1,6 @@
 import sqlite3 as sql
 
-from typing import TypeAlias, Any, NoReturn, Tuple, List
+from typing import TypeAlias, Any, Tuple, List
 from radio import Station, StationAddress, StationScoreboardAddress
 
 
@@ -79,10 +79,11 @@ class Create_Discord_Activity_Tables:
         with sql.connect(db_path) as connect:
             cursor = connect.cursor()
             cursor.execute(self.radio_activity)
+            cursor.execute(self.radio_play)
             cursor.close()
 
     @property
-    def radio_activity(self):
+    def radio_activity(self) -> str:
         cmd =   'CREATE TABLE IF NOT EXISTS radio_activity('\
                 'id INTEGER PRIMARY KEY AUTOINCREMENT, '\
                 'radio_name TEXT NOT NULL, '\
@@ -101,7 +102,7 @@ class Connect:
     def get_radio_list(self) -> List[str | None]:
         cmd = "SELECT name FROM radio;"
         raw =  self.__execute(cmd, method='fetchall')
-        return  self.__normalize_radio_list(raw)
+        return  self.__normalize_list(raw)
     
     def get_radio_station_address(self, radio_name: str) -> None | StationAddress:
         cmd = "SELECT url, key, value FROM radio "\
@@ -153,7 +154,7 @@ class Connect:
         cmd = "INSERT INTO radio_activity (radio_name, guild_id, channel_id) VALUES (?, ?, ?);"
         self.__execute(cmd, (radio_name, guild_id, channel_id))
 
-    def unset_radio_activity(self, guild_id: int) -> None:
+    def delete_radio_activity(self, guild_id: int) -> None:
         cmd = "DELETE FROM radio_activity WHERE guild_id = ?;"
         self.__execute(cmd, (guild_id,))
 
@@ -161,7 +162,7 @@ class Connect:
         cmd = "SELECT radio_name, guild_id, channel_id FROM radio_activity;"
         return self.__execute(cmd, method='fetchall')
 
-    def __normalize_radio_list(self, data: List[Tuple[str]]) -> List[str]:
+    def __normalize_list(self, data: List[Tuple[str]]) -> List[str]:
         return [x[0] for x in data]
 
     def __normalize_radio_address(self, data: Tuple[Tuple[str]]) -> StationAddress:

@@ -1,4 +1,4 @@
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord import FFmpegPCMAudio, PCMVolumeTransformer
 from db.database import Connect
 
@@ -6,6 +6,8 @@ class Radio(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.__db = Connect()
+
+        self.is_listening.start()
 
     @commands.command()
     async def info(self, ctx):
@@ -46,7 +48,7 @@ class Radio(commands.Cog):
     @commands.command()
     async def stop(self, ctx):
         """Stops and disconnects the bot from voice"""
-        self.__db.unset_radio_activity(ctx.message.guild.id)
+        self.__db.delete_radio_activity(ctx.message.guild.id)
         await ctx.voice_client.disconnect()
 
     @play.before_invoke
@@ -59,11 +61,21 @@ class Radio(commands.Cog):
                 raise commands.CommandError(
                     "Author not connected to a voice channel.")
         elif ctx.voice_client.is_playing():
-            guild_id = ctx.message.guild.id
-            self.__db.unset_radio_activity(guild_id)
+            self.__db.delete_radio_activity(ctx.message.guild.id)
             ctx.voice_client.stop()
             if ctx.author.voice and ctx.author.voice.channel.id != ctx.voice_client.channel.id:
                 await ctx.voice_client.move_to(ctx.author.voice.channel)
+
+    @tasks.loop(seconds=30)
+    async def is_listening(self):
+        for ctx in self.bot.voice_clients:
+            bot_count = 0
+            for member in ctx.channel.members:
+                bot_count += member.bot
+            if len(ctx.channel.members) - bot_count < 1:
+                ctx.stop()
+                self.__db.delete_radio_activity(ctx.channel.guild.id)
+                await ctx.disconnect()
 
 
 async def setup(bot: commands.Bot) -> None:
