@@ -98,9 +98,10 @@ class Connect:
         Create_Radio_Tables(self.__db)
         Create_Discord_Activity_Tables(self.__db)
     
-    def get_radio_list(self) -> List[Tuple[str] | None]:
+    def get_radio_list(self) -> List[str | None]:
         cmd = "SELECT name FROM radio;"
-        return self.__execute(cmd, method='fetchall')
+        raw =  self.__execute(cmd, method='fetchall')
+        return  self.__normalize_radio_list(raw)
     
     def get_radio_station_address(self, radio_name: str) -> None | StationAddress:
         cmd = "SELECT url, key, value FROM radio "\
@@ -137,7 +138,7 @@ class Connect:
             self.__set_radio_scoreboard_address_params(scoreboard_id, scoreboard_params)
 
     def get_radio(self, radio_name: str) -> Station:
-        if radio_name in self.get_radio_list():
+        if radio_name not in self.get_radio_list():
             raise BaseException(f'Radio "{radio_name}" is not exists in database')
         station_address = self.get_radio_station_address(radio_name)
         scoreboard_address = self.get_radio_scoreboard_address(radio_name)
@@ -147,6 +148,21 @@ class Connect:
             scoreboard_address=scoreboard_address
         )
         return data
+    
+    def set_radio_activity(self, guild_id: int, channel_id: int, radio_name: str) -> None:
+        cmd = "INSERT INTO radio_activity (radio_name, guild_id, channel_id) VALUES (?, ?, ?);"
+        self.__execute(cmd, (radio_name, guild_id, channel_id))
+
+    def unset_radio_activity(self, guild_id: int) -> None:
+        cmd = "DELETE FROM radio_activity WHERE guild_id = ?;"
+        self.__execute(cmd, (guild_id,))
+
+    def get_radio_activity(self) -> List[Tuple[Any] | None]:
+        cmd = "SELECT radio_name, guild_id, channel_id FROM radio_activity;"
+        return self.__execute(cmd, method='fetchall')
+
+    def __normalize_radio_list(self, data: List[Tuple[str]]) -> List[str]:
+        return [x[0] for x in data]
 
     def __normalize_radio_address(self, data: Tuple[Tuple[str]]) -> StationAddress:
         if len(data) < 1:

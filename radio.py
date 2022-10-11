@@ -48,112 +48,6 @@ class MusicInfo:
         return self.__formatted_text
 
 
-STATIONS = {
-    "J-Pop Powerplay Kawaii": Station(
-        name='J-Pop Powerplay Kawaii',
-        station_address=StationAddress(
-            url='https://kathy.torontocast.com:3060/;',
-            params={
-                'type': 'http'
-            }
-        ),
-        scoreboard_address=StationScoreboardAddress(
-            url='https://listen.samcloud.com/webapi/station/77836/history/npe',
-            params={
-                'token': '17ea9158ac026e12bff74db9bddbf8a6de2c23cd',
-                'format': 'json',
-                '_': ''
-            }
-        )
-    ),
-    'Japan Hits': Station(
-        name='Japan Hits',
-        station_address=StationAddress(
-            url='https://igor.torontocast.com:1025/;',
-            params={
-                'type': 'http'
-            }
-        ),
-        scoreboard_address=StationScoreboardAddress(
-            url='https://listen.samcloud.com/webapi/station/78063/history/npe',
-            params={
-                'token': 'cf8d100d2f5e841ecdb8428e14bab72b1b281bfe',
-                'format': 'json',
-                '_': ''
-            }
-        )
-    ),
-    'J-Pop Powerplay': Station(
-        name='J-Pop Powerplay',
-        station_address=StationAddress(
-            url='https://kathy.torontocast.com:3560/;',
-            params={
-                'type': 'http'
-            }
-        ),
-        scoreboard_address=StationScoreboardAddress(
-            url='https://listen.samcloud.com/webapi/station/101976/history/npe',
-            params={
-                'token': '6075532892f2f66b3a45468a26d8b61403c0152a',
-                'format': 'json',
-                '_': ''
-            }
-        )
-    ),
-    'J-Pop Sakura 懐かしい': Station(
-        name='J-Pop Sakura 懐かしい',
-        station_address=StationAddress(
-            url='https://igor.torontocast.com:1710/;',
-            params={
-                'type': 'http'
-            }
-        ),
-        scoreboard_address=StationScoreboardAddress(
-            url='https://listen.samcloud.com/webapi/station/77726/history/npe',
-            params={
-                'token': 'cb8691400659ddb378bb39eb53bd8a7ae653161b',
-                'format': 'json',
-                '_': ''
-            }
-        )
-    ),
-    'J-Rock Powerplay': Station(
-        name='J-Rock Powerplay',
-        station_address=StationAddress(
-            url='https://kathy.torontocast.com:3340/;',
-            params={
-                'type': 'http'
-            }
-        ),
-        scoreboard_address=StationScoreboardAddress(
-            url='https://listen.samcloud.com/webapi/station/78062/history/npe',
-            params={
-                'token': 'e01dfb25370ccec1df2bd96c15d47ff89b6bb62f',
-                'format': 'json',
-                '_': ''
-            }
-        )
-    ),
-    'J-Club Powerplay HipHop': Station(
-        name='J-Club Powerplay HipHop',
-        station_address=StationAddress(
-            url='https://kathy.torontocast.com:3350/;',
-            params={
-                'type': 'http'
-            }
-        ),
-        scoreboard_address=StationScoreboardAddress(
-            url='https://listen.samcloud.com/webapi/station/77996/history/npe',
-            params={
-                'token': '889c64fbb7226ba0e03334e7490badae370d6402',
-                'format': 'json',
-                '_': ''
-            }
-        )
-    )
-}
-
-
 def wtf_time_to_std_time(wtf_time: str = None) -> str:
     '''
     Get wtf_time type(str) as "PT0M00.000S"
@@ -189,15 +83,8 @@ def __request_get(url: str, params: dict) -> requests.Response:
     return response
 
 
-def what_plays_on_asiadreamradio(station_name: str) -> MusicInfo:
-    station = STATIONS.get(station_name)
-    if not station:
-        raise BaseException(f'Station "{station_name}" not found')
-
-    scoreboard = station.scoreboard_address
-
+def what_plays_on_asiadreamradio(scoreboard: StationScoreboardAddress) -> MusicInfo:
     scoreboard = __update_time_in_scoreboard(scoreboard)
-    station.scoreboard_address = scoreboard
 
     response = __request_get(url=scoreboard.url, params=scoreboard.params)
     content: dict = response.json()
@@ -213,8 +100,3 @@ def what_plays_on_asiadreamradio(station_name: str) -> MusicInfo:
         )
     else:
         raise BaseException(f'Inccorrect data: {content}')                
-
-
-if __name__ == '__main__':
-    radio = 'J-Club Powerplay HipHop'
-    print('&'.join(['='.join(x) for x in STATIONS[radio].station_address.params.items()]))

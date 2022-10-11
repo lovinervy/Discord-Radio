@@ -1,6 +1,8 @@
 from discord import Intents
 from discord.ext import commands
-import asyncio
+
+from db.database import Connect
+from setup import add_radio
 
 import logging
 
@@ -10,6 +12,7 @@ logging.basicConfig(level=logging.INFO, filename='logging.log')
 
 extensions = (
     "cogs.music",
+    # 'cogs.notificator',
 )
 
 class Bot(commands.Bot):
@@ -27,6 +30,10 @@ class Bot(commands.Bot):
 def main():
     from discord_token import token
 
+    db = Connect()
+    if not db.get_radio_list():
+        add_radio(db)
+   
     bot = Bot()
     bot.run(token)
 
