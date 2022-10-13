@@ -1,5 +1,4 @@
 from typing import List
-import asyncio
 from discord.ext import commands, tasks
 
 from db.database import Connect, radioActivity
