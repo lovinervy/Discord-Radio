@@ -1,3 +1,3 @@
 # Discord-Radio
 
-## WARNING UPDATE BRANCH ISN`T WORKS!!!
+## UPDATE BRANCH IS WORKS!!!
