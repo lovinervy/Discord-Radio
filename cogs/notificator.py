@@ -27,7 +27,6 @@ class Radio_Notify(commands.Cog):
         return radios
     
     def __update_last_scoreboard_data(self, radio_name: str, data: str):
-        print('update last scoreboard')
         if self.__db.get_last_scoreboard(radio_name):
             self.__db.update_last_scoreboard(radio_name, data)
         else:
@@ -44,7 +43,6 @@ class Radio_Notify(commands.Cog):
         elif last_data != data.to_str():
             self.__db.update_current_scoreboard(radio_name, data.to_str())
 
-
     @tasks.loop(seconds=30)
     async def send_notification(self):
         active_channels = self.__db.get_radio_activity()
@@ -53,17 +51,16 @@ class Radio_Notify(commands.Cog):
             scoreboard = self.__db.get_radio_scoreboard_address(radio)
             await self.__update_current_scoreboard_data(radio, scoreboard)
             if self.is_new_radio_data(radio):
-                print('Im here')
                 data = self.__db.get_current_scoreboard(radio)
                 self.__update_last_scoreboard_data(radio, data)
                 for channel in active_channels:
                     if channel.radio == radio:
                         ctx = self.bot.get_channel(channel.channel_id)
-                        if ctx is None:
-                            print('ctx not found')
+                        if ctx is not None:
+                            message = f'Radio: {radio}\n{data}'
+                            await ctx.send(message)                            
                         else:
-                            await ctx.send(data)                            
-
+                            self.__db.delete_radio_activity(channel.guild_id)
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Radio_Notify(bot))
