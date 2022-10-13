@@ -1,18 +1,19 @@
+from traceback import format_exception
 from discord import Intents
 from discord.ext import commands
 
 from db.database import Connect
-from setup import add_radio
+from setup import add_radio, clear_activity
 
 import logging
 
 
-logging.basicConfig(level=logging.INFO, filename='logging.log')
+logging.basicConfig(level=logging.INFO, filename='logging.log', )
 
 
 extensions = (
     "cogs.music",
-    # 'cogs.notificator',
+    'cogs.notificator',
 )
 
 class Bot(commands.Bot):
@@ -33,6 +34,8 @@ def main():
     db = Connect()
     if not db.get_radio_list():
         add_radio(db)
+    if db.get_radio_activity():
+        clear_activity(db)
    
     bot = Bot()
     bot.run(token)

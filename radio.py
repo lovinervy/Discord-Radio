@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import time
-import requests
+import json
+import aiohttp
 
 
 @dataclass
@@ -39,7 +40,10 @@ class MusicInfo:
             f"Year: {self.year}\n"\
             f"Duration: {self.duration}\n"\
             f"Composer: {self.composer}"
-        return text       
+        return text
+
+    def to_str(self):
+        return self.__str__()    
 
     def __str__(self) -> str:
         return self.__formatted_text
@@ -72,31 +76,33 @@ def wtf_time_to_std_time(wtf_time: str = None) -> str:
 
 
 def __update_time_in_scoreboard(scoreboard: StationScoreboardAddress) -> StationScoreboardAddress:
-    scoreboard.params['_'] = time.time() // 1
+    scoreboard.params['_'] = str(int(time.time() // 1))
     return scoreboard
 
 
-def __request_get(url: str, params: dict) -> requests.Response:
-    response = requests.get(url=url, params=params)
-    if response.status_code != 200:
-        raise requests.exceptions.ConnectionError(f'Error:\nurl: {url}\nparams: {params}\nstatus code: {response.status_code}\nResponse: {response.text}')
-    return response
+async def __request_get(url: str, params: dict):
+    with open('headers.json', 'r') as f:
+        headers = json.load(f)
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url=url, params=params, headers=headers) as response:
+            if response.status == 200:
+                data = await response.text()
+    return data
 
 
-def what_plays_on_asiadreamradio(scoreboard: StationScoreboardAddress) -> MusicInfo:
-    scoreboard = __update_time_in_scoreboard(scoreboard)
-
-    response = __request_get(url=scoreboard.url, params=scoreboard.params)
-    content: dict = response.json()
-
-    info = content.get('m_Item2')
-    if info:
-        return MusicInfo(
-            artist = info.get('Artist'),
-            title = info.get('Title'),
-            year = info.get('Year'),
-            duration = wtf_time_to_std_time(info.get('Duration')),
-            composer = info.get('Composer'),
-        )
-    else:
-        raise BaseException(f'Inccorrect data: {content}')                
+async def what_plays_on_asiadreamradio(scoreboard: StationScoreboardAddress) -> MusicInfo | None:
+    __update_time_in_scoreboard(scoreboard)
+    response = await __request_get(scoreboard.url, scoreboard.params)
+    if response:
+        content: dict = json.loads(response)
+        info = content.get('m_Item2')
+        if info:
+            return MusicInfo(
+                artist = info.get('Artist'),
+                title = info.get('Title'),
+                year = info.get('Year'),
+                duration = wtf_time_to_std_time(info.get('Duration')),
+                composer = info.get('Composer'),
+            )
+        else:
+            raise BaseException(f'Inccorrect data: {content}')                

@@ -1,8 +1,15 @@
 import sqlite3 as sql
+from dataclasses import dataclass
 
 from typing import TypeAlias, Any, Tuple, List
 from radio import Station, StationAddress, StationScoreboardAddress
 
+
+@dataclass
+class radioActivity:
+    radio: str
+    guild_id: int
+    channel_id: int
 
 sql_command: TypeAlias = str
 lastrowid: TypeAlias = int
@@ -20,6 +27,8 @@ class Create_Radio_Tables:
             cursor.execute(self.station_address_params)
             cursor.execute(self.scoreboard_address)
             cursor.execute(self.scoreboard_address_params)
+            cursor.execute(self.last_radio_scoreboard_data)
+            cursor.execute(self.current_radio_scoreboard_data)
             connect.commit()
             cursor.close
 
@@ -73,13 +82,33 @@ class Create_Radio_Tables:
                 ');'
         return cmd
 
+    @property
+    def last_radio_scoreboard_data(self):
+        cmd =   'CREATE TABLE IF NOT EXISTS scoreboard_data('\
+                'id INTEGER PRIMARY KEY AUTOINCREMENT, '\
+                'radio_id INTEGER NOT NULL, '\
+                'data TEXT NOT NULL, '\
+                'FOREIGN KEY (radio_id) REFERENCES radio(id)'\
+                ');'
+        return cmd
+    
+    @property
+    def current_radio_scoreboard_data(self):
+        cmd =   'CREATE TABLE IF NOT EXISTS current_scoreboard_data('\
+                'id INTEGER PRIMARY KEY AUTOINCREMENT, '\
+                'radio_id INTEGER NOT NULL, '\
+                'data TEXT NOT NULL, '\
+                'FOREIGN KEY (radio_id) REFERENCES radio(id)'\
+                ');'
+        return cmd
+
 
 class Create_Discord_Activity_Tables:
     def __init__(self, db_path: str) -> None:
         with sql.connect(db_path) as connect:
             cursor = connect.cursor()
             cursor.execute(self.radio_activity)
-            cursor.execute(self.radio_play)
+            connect.commit()
             cursor.close()
 
     @property
@@ -113,7 +142,7 @@ class Connect:
         raw = self.__execute(cmd, (radio_name, ), "fetchall")
         return self.__normalize_radio_address(raw)
     
-    def get_radio_scoreboard_address(self, radio_name: str) -> None | Any:
+    def get_radio_scoreboard_address(self, radio_name: str) -> None | StationScoreboardAddress:
         cmd = "SELECT url, key, value FROM radio "\
                 "INNER JOIN scoreboard_address ON "\
                     "radio.id = scoreboard_address.radio_id AND radio.name = ? "\
@@ -158,9 +187,67 @@ class Connect:
         cmd = "DELETE FROM radio_activity WHERE guild_id = ?;"
         self.__execute(cmd, (guild_id,))
 
-    def get_radio_activity(self) -> List[Tuple[Any] | None]:
+    def get_radio_activity(self) -> List[radioActivity] | None:
         cmd = "SELECT radio_name, guild_id, channel_id FROM radio_activity;"
-        return self.__execute(cmd, method='fetchall')
+        raw = self.__execute(cmd, method='fetchall')
+        return self.__normalize_radio_activity(raw)
+
+    def get_last_scoreboard(self, radio_name: str) -> str | None:
+        cmd = "SELECT data FROM scoreboard_data "\
+                "INNER JOIN radio ON "\
+                    "radio.id = scoreboard_data.radio_id AND radio.name = ?;"
+        raw = self.__execute(cmd, (radio_name,), 'fetchone')
+        if raw is None:
+            return None
+        return raw[0]
+
+    def set_last_scoreboard(self, radio_name: str, data: str) -> None:
+        cmd =   "INSERT INTO scoreboard_data (data, radio_id) "\
+                "VALUES (?, (SELECT id from radio WHERE name = ?));"
+        self.__execute(cmd, (data, radio_name))
+
+    def update_last_scoreboard(self, radio_name: str, data: str) -> None:
+        cmd =   "UPDATE scoreboard_data "\
+                    "SET data = ? "\
+                "WHERE scoreboard_data.radio_id = (SELECT id FROM radio WHERE name = ?);"
+        self.__execute(cmd, (data, radio_name))
+
+    def delete_last_scoreboard(self, radio_name: str) -> None:
+        cmd = "DELETE FROM scoreboard_data WHERE radio_id = (SELECT id FROM radio WHERE name = ?);"
+        self.__execute(cmd, (radio_name,))
+
+    def get_current_scoreboard(self, radio_name: str) -> str | None:
+        cmd = "SELECT data FROM current_scoreboard_data "\
+                "INNER JOIN radio ON "\
+                    "radio.id = current_scoreboard_data.radio_id AND radio.name = ?;"
+        raw = self.__execute(cmd, (radio_name,), 'fetchone')
+        if raw is None:
+            return None
+        return raw[0]
+
+    def set_current_scoreboard(self, radio_name: str, data: str) -> None:
+        cmd =   "INSERT INTO current_scoreboard_data (data, radio_id) "\
+                "VALUES (?, (SELECT id from radio WHERE name = ?));"
+        self.__execute(cmd, (data, radio_name))
+
+    def update_current_scoreboard(self, radio_name: str, data: str) -> None:
+        cmd =   "UPDATE current_scoreboard_data "\
+                    "SET data = ? "\
+                "WHERE current_scoreboard_data.radio_id = (SELECT id FROM radio WHERE name = ?);"
+        self.__execute(cmd, (data, radio_name))
+
+    def delete_current_scoreboard(self, radio_name: str) -> None:
+        cmd = "DELETE FROM current_scoreboard_data WHERE radio_id = (SELECT id FROM radio WHERE name = ?);"
+        self.__execute(cmd, (radio_name,))
+
+    def __normalize_radio_activity(self, raw: List[Tuple[str | int]]) -> List[radioActivity] | None:
+        if not raw:
+            return None
+        
+        data = []
+        for activity in raw:
+            data.append(radioActivity(*activity))
+        return data
 
     def __normalize_list(self, data: List[Tuple[str]]) -> List[str]:
         return [x[0] for x in data]

@@ -117,4 +117,8 @@ def add_radio(db):
                 data.scoreboard_address.url,
                 data.scoreboard_address.params
             )
-    
+
+def clear_activity(db):
+    activity_list = db.get_radio_activity()
+    for activity in activity_list:
+        db.delete_radio_activity(activity.guild_id)
