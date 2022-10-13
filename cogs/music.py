@@ -23,8 +23,6 @@ class Radio(commands.Cog):
         """<Radio name> Plays radio"""
 
         if radio and radio in self.__db.get_radio_list():
-            await ctx.author.voice.channel.connect()
-            await ctx.send('Hi')
             station_address = self.__db.get_radio_station_address(radio)
             params = '&'.join(['='.join(x) for x in station_address.params.items()])
             radio_url = station_address.url + '?' + params
@@ -59,7 +57,8 @@ class Radio(commands.Cog):
         if ctx.voice_client is None:
             if ctx.author.voice is None:
                 await ctx.send("You are not connected to a voice channel.")
-
+            else:
+                await ctx.author.voice.channel.connect()
         elif ctx.voice_client.is_playing():
             if ctx.author.voice:
                 self.__db.delete_radio_activity(ctx.message.guild.id)
