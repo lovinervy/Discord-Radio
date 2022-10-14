@@ -1,15 +1,17 @@
-from discord import Intents
-from discord.ext import commands
-import asyncio
-
 import logging
 
+from discord import Intents
+from discord.ext import commands
 
-logging.basicConfig(level=logging.INFO, filename='logging.log')
+from db.database import Connect
+from setup import add_radio, clear_activity
+
+logging.basicConfig(level=logging.INFO, filename='logging.log', )
 
 
 extensions = (
     "cogs.music",
+    'cogs.notificator',
 )
 
 class Bot(commands.Bot):
@@ -27,6 +29,12 @@ class Bot(commands.Bot):
 def main():
     from discord_token import token
 
+    db = Connect()
+    if not db.get_radio_list():
+        add_radio(db)
+    if db.get_radio_activity():
+        clear_activity(db)
+   
     bot = Bot()
     bot.run(token)
 

@@ -1,56 +1,41 @@
-from typing import NoReturn
-
+from discord import FFmpegPCMAudio, PCMVolumeTransformer
 from discord.ext import commands, tasks
-from discord import FFmpegPCMAudio, PCMVolumeTransformer, VoiceChannel
 
-from radio import what_plays_on_asiadreamradio, STATIONS
+from db.database import Connect
 
 
 class Radio(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
-        self.bot = bot        
-        self.current_plays.start()
-        self.now_plays = {}
-        for station in STATIONS.keys():
-            self.now_plays[station] = {
-                'channels': [],
-                'current_plays': ''
-                }
+        self.bot = bot
+        self.__db = Connect()
 
-    @commands.command()
-    async def join(self, ctx, *, channel: VoiceChannel):
-        """Joins a voice channel"""
-
-        if ctx.voice_client is not None:
-            return await ctx.voice_client.move_to(channel)
-
-        await channel.connect()
+        self.is_listening.start()
 
     @commands.command()
     async def info(self, ctx):
         """Available radio list"""
 
-        radios = '\n'.join(self.now_plays.keys())
-        await ctx.send(f'\n{radios}')
+        radios = "List access radio stations:\n"
+        for radio in self.__db.get_radio_list():
+            radios += f'{radio}\n'
+        await ctx.send(radios)
 
     @commands.command()
     async def play(self, ctx, *, radio: str = None):
         """<Radio name> Plays radio"""
 
-        if radio and radio in self.now_plays:
-            params = '&'.join(['='.join(x) for x in STATIONS[radio].station_address.params.items()])
-            radio_url = STATIONS[radio].station_address.url + '?' + params
-
-            voice_id = ctx.author.voice.channel.id
-            channel_id = ctx.message.channel.id
-            self.now_plays[radio]['channels'].append([channel_id, voice_id])
-
+        if radio and radio in self.__db.get_radio_list():
+            station_address = self.__db.get_radio_station_address(radio)
+            params = '&'.join(['='.join(x) for x in station_address.params.items()])
+            radio_url = station_address.url + '?' + params
             source = PCMVolumeTransformer(FFmpegPCMAudio(radio_url))
+
+            guild_id = ctx.message.guild.id
+            channel_id = ctx.message.channel.id
+            self.__db.set_radio_activity(guild_id, channel_id, radio)
+
             ctx.voice_client.play(source, after=lambda e: print(
                 f'Player error: {e}') if e else None)
-            current = self.now_plays[radio]['current_plays']
-
-            await ctx.send(f'Now playing:\n{current}')
 
     @commands.command()
     async def volume(self, ctx, volume: int = 50):
@@ -65,44 +50,38 @@ class Radio(commands.Cog):
     @commands.command()
     async def stop(self, ctx):
         """Stops and disconnects the bot from voice"""
-
-        channel = ctx.message.channel.id
-        for station in self.now_plays.keys():
-            for i in range(len(self.now_plays[station]['channels'])):
-                if self.now_plays[station]['channels'][i][0] == channel:
-                    self.now_plays[station]['channels'].pop(i)
-        await ctx.voice_client.disconnect()
+        if ctx.voice_client is not None:
+            self.__db.delete_radio_activity(ctx.message.guild.id)
+            await ctx.voice_client.disconnect()
 
     @play.before_invoke
     async def ensure_voice(self, ctx):
         if ctx.voice_client is None:
-            if ctx.author.voice:
-                await ctx.author.voice.channel.connect()
-            else:
+            if ctx.author.voice is None:
                 await ctx.send("You are not connected to a voice channel.")
-                raise commands.CommandError(
-                    "Author not connected to a voice channel.")
+            else:
+                await ctx.author.voice.channel.connect()
         elif ctx.voice_client.is_playing():
-            channel = ctx.message.channel.id
-            for station in self.now_plays.keys():
-                for i in range(len(self.now_plays[station]['channels'])):
-                    if self.now_plays[station]['channels'][i][0] == channel:
-                        self.now_plays[station]['channels'].pop(i)
-        
-            ctx.voice_client.stop()
+            if ctx.author.voice:
+                self.__db.delete_radio_activity(ctx.message.guild.id)
+                ctx.voice_client.stop()
+                if ctx.author.voice.channel.id != ctx.voice_client.channel.id:
+                    await ctx.voice_client.move_to(ctx.author.voice.channel)
+            else:
+                await ctx.send("You must first connecting in the voice channel before executing this command")
+                raise commands.CommandInvokeError('User tried change condition without connecting in voice channel')
 
     @tasks.loop(seconds=30)
-    async def current_plays(self):
-        for station in self.now_plays.keys():
-            if len(self.now_plays[station]['channels']) > 0:
-                current = what_plays_on_asiadreamradio(station)
-                if current != self.now_plays[station]['current_plays']:
-                    self.now_plays[station]['current_plays'] = current
-                    for i, channel_id in enumerate(self.now_plays[station]['channels']):
-                        ctx = self.bot.get_channel(channel_id[0])
-                        voice_ctx = self.bot.get_channel(channel_id[1])
-                        await ctx.send(f'Now playing:\n{current}')
+    async def is_listening(self):
+        for ctx in self.bot.voice_clients:
+            bot_count = 0
+            for member in ctx.channel.members:
+                bot_count += member.bot
+            if len(ctx.channel.members) - bot_count < 1:
+                ctx.stop()
+                self.__db.delete_radio_activity(ctx.channel.guild.id)
+                await ctx.disconnect()
 
 
-async def setup(bot: commands.Bot) -> NoReturn:
+async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Radio(bot))
