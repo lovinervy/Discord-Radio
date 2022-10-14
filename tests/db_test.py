@@ -7,6 +7,7 @@ from my_types.radio import Station, StationAddress, StationScoreboardAddress
 
 TEST_DB_PATH = 'tests/test_db.db'
 STATION_NAME = 'test'
+STATION_NAME2 = 'test2'
 STATION_ADDRESS = StationAddress('http://radio.com/', {'test': 'radio'})
 SCOREBOARD_ADDRESS = StationScoreboardAddress('http://scoreboard.com/', {'test': 'scoreboard'})
 STATION = Station('test', STATION_ADDRESS, SCOREBOARD_ADDRESS)
@@ -34,8 +35,12 @@ def test_set_radio(setup_db):
     setup_db.set_radio(*radio)
 
 
+def test_set_radio_without_scoreboard(setup_db):
+    radio = [STATION_NAME2,  STATION_ADDRESS.url, STATION_ADDRESS.params]
+    setup_db.set_radio(*radio)
+
 def test_get_radio_list(setup_db):
-   assert setup_db.get_radio_list() == [STATION_NAME]
+   assert setup_db.get_radio_list() == [STATION_NAME, STATION_NAME2]
 
 
 def test_get_radio_station_address(setup_db):
