@@ -69,7 +69,7 @@ class Radio(commands.Cog):
                     await ctx.voice_client.move_to(ctx.author.voice.channel)
             else:
                 await ctx.send("You must first connecting in the voice channel before executing this command")
-                raise commands.CommandInvokeError('User tried change condition without connecting in voice channel') 
+                raise commands.CommandInvokeError('User tried change condition without connecting in voice channel')
 
     @tasks.loop(seconds=30)
     async def is_listening(self):

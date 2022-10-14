@@ -60,7 +60,7 @@ class Radio_Notify(commands.Cog):
                         ctx = self.bot.get_channel(channel.channel_id)
                         if ctx is not None:
                             message = f'Radio: {radio}\n{data}'
-                            await ctx.send(message)                            
+                            await ctx.send(message)
                         else:
                             self.__db.delete_radio_activity(channel.guild_id)
 

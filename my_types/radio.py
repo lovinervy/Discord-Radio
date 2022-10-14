@@ -40,7 +40,7 @@ class MusicInfo:
         return text
 
     def to_str(self):
-        return self.__str__()    
+        return self.__str__()
 
     def __str__(self) -> str:
         return self.__formatted_text
