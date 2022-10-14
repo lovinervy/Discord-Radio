@@ -251,9 +251,9 @@ class Connect:
             params[el[1]] = el[2]
         return StationAddress(url, params)
 
-    def __normalize_radio_scoreboard_address(self, data: Tuple[Tuple[str]]) -> StationScoreboardAddress:
+    def __normalize_radio_scoreboard_address(self, data: Tuple[Tuple[str]]) -> StationScoreboardAddress | None:
         if len(data) < 1:
-            return StationScoreboardAddress('', {})
+            return None
         params = {}
         url = data[0][0]
         for el in data:

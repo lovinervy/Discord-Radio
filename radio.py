@@ -45,6 +45,8 @@ async def __request_get(url: str, params: dict):
 
 
 async def what_plays_on_asiadreamradio(scoreboard: StationScoreboardAddress) -> MusicInfo | None:
+    if scoreboard is None:
+        return None
     __update_time_in_scoreboard(scoreboard)
     response = await __request_get(scoreboard.url, scoreboard.params)
     content: dict = json.loads(response)
@@ -58,4 +60,4 @@ async def what_plays_on_asiadreamradio(scoreboard: StationScoreboardAddress) -> 
             composer = info.get('Composer'),
         )
     else:
-        raise BaseException(f'Inccorrect data: {content}')                
+        raise BaseException(f'Inccorrect data: {content}')
