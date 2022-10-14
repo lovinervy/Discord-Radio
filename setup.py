@@ -1,5 +1,4 @@
-from db.database import Connect
-from radio import Station, StationAddress, StationScoreboardAddress 
+from my_types.radio import Station, StationAddress, StationScoreboardAddress
 
 BASIC_STATIONS = {
     "J-Pop Powerplay Kawaii": Station(

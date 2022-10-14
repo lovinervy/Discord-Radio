@@ -1,9 +1,9 @@
-import pytest
 import os
 
-from db.database import Connect, radioActivity
-from radio import Station, StationAddress, StationScoreboardAddress
+import pytest
 
+from db.database import Connect, radioActivity
+from my_types.radio import Station, StationAddress, StationScoreboardAddress
 
 TEST_DB_PATH = 'tests/test_db.db'
 STATION_NAME = 'test'

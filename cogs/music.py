@@ -1,6 +1,8 @@
-from discord.ext import commands, tasks
 from discord import FFmpegPCMAudio, PCMVolumeTransformer
+from discord.ext import commands, tasks
+
 from db.database import Connect
+
 
 class Radio(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:

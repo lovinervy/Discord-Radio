@@ -1,8 +1,11 @@
 from typing import List
+
 from discord.ext import commands, tasks
 
 from db.database import Connect, radioActivity
-from radio import what_plays_on_asiadreamradio, StationScoreboardAddress
+from my_types.radio import StationScoreboardAddress
+from radio import what_plays_on_asiadreamradio
+
 
 class Radio_Notify(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:

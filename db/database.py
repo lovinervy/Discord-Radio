@@ -1,18 +1,8 @@
 import sqlite3 as sql
-from dataclasses import dataclass
+from typing import Any, List, Tuple
 
-from typing import TypeAlias, Any, Tuple, List
-from radio import Station, StationAddress, StationScoreboardAddress
-
-
-@dataclass
-class radioActivity:
-    radio: str
-    guild_id: int
-    channel_id: int
-
-sql_command: TypeAlias = str
-lastrowid: TypeAlias = int
+from my_types.database import lastrowid, radioActivity, sql_command
+from my_types.radio import Station, StationAddress, StationScoreboardAddress
 
 PATH = 'db'
 DATABASE = f'{PATH}/DATABASE.db'

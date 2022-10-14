@@ -1,12 +1,10 @@
-from traceback import format_exception
+import logging
+
 from discord import Intents
 from discord.ext import commands
 
 from db.database import Connect
 from setup import add_radio, clear_activity
-
-import logging
-
 
 logging.basicConfig(level=logging.INFO, filename='logging.log', )
 
