@@ -7,6 +7,7 @@ python3.10 -m venv .venv
 source .venv/bin/activate
 pip install -U pip
 pip install -r requirements.txt
+python main.py
 ```
 
 ### Set discord bot token in ```discord_token.py```
