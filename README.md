@@ -1,7 +1,7 @@
 # Discord-Radio
 
 ## Need Python 3.10 or higher
-
+## Need Ffmpeg
 ```bash
 python3.10 -m venv .venv
 source .venv/bin/activate
