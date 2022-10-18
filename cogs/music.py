@@ -33,6 +33,8 @@ class Radio(commands.Cog):
             guild_id = ctx.message.guild.id
             channel_id = ctx.message.channel.id
             self.__db.set_radio_activity(guild_id, channel_id, radio)
+            if self.__db.get_from_silence_group(guild_id):
+                await ctx.send("Silence mod is active, if you wanna turn off, just send '>silence off'")
 
             ctx.voice_client.play(source, after=lambda e: print(
                 f'Player error: {e}') if e else None)

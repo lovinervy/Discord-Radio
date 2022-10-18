@@ -102,3 +102,14 @@ def test_update_current_scoreboard(setup_db):
 def test_delete_current_scoreboard(setup_db):
     setup_db.delete_current_scoreboard(STATION_NAME)
     assert setup_db.get_current_scoreboard(STATION_NAME) == None
+
+def test_get_from_silence_group(setup_db):
+    assert setup_db.get_from_silence_group(GUILD_ID) == None
+
+def test_add_in_silence_group(setup_db):
+    setup_db.add_in_silence_group(GUILD_ID)
+    assert setup_db.get_from_silence_group(GUILD_ID) == (1, GUILD_ID)
+
+def test_delete_from_silence_group(setup_db):
+    setup_db.delete_from_silence_group(GUILD_ID)
+    assert setup_db.get_from_silence_group(GUILD_ID) == None

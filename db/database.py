@@ -98,6 +98,7 @@ class Create_Discord_Activity_Tables:
         with sql.connect(db_path) as connect:
             cursor = connect.cursor()
             cursor.execute(self.radio_activity)
+            cursor.execute(self.silence_group)
             connect.commit()
             cursor.close()
 
@@ -110,7 +111,14 @@ class Create_Discord_Activity_Tables:
                 'channel_id INTEGER NOT NULL'\
                 ');'
         return cmd
-
+    
+    @property
+    def silence_group(self) -> str:
+        cmd =   'CREATE TABLE IF NOT EXISTS silence_group('\
+                'id INTEGER PRIMARY KEY AUTOINCREMENT, '\
+                'guild_id INTEGER NOT NULL'\
+                ');'
+        return cmd
 
 class Connect:
     def __init__(self, db_path: str = DATABASE) -> None:
@@ -229,6 +237,18 @@ class Connect:
     def delete_current_scoreboard(self, radio_name: str) -> None:
         cmd = "DELETE FROM current_scoreboard_data WHERE radio_id = (SELECT id FROM radio WHERE name = ?);"
         self.__execute(cmd, (radio_name,))
+
+    def get_from_silence_group(self, guild_id: int) -> Tuple[int]:
+        cmd = "SELECT * FROM silence_group WHERE guild_id = ?;"
+        return self.__execute(cmd, (guild_id,), 'fetchone')
+
+    def delete_from_silence_group(self, guild_id: int) -> None:
+        cmd = "DELETE FROM silence_group WHERE guild_id = ?;"
+        self.__execute(cmd, (guild_id,))
+
+    def add_in_silence_group(self, guild_id: int) -> None:
+        cmd = "INSERT INTO silence_group(guild_id) VALUES(?);"
+        self.__execute(cmd, (guild_id,))
 
     def __normalize_radio_activity(self, raw: List[Tuple[str | int]]) -> List[radioActivity] | None:
         if not raw:
