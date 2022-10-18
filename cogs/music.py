@@ -7,7 +7,7 @@ from db.database import Connect
 class Radio(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
-        self.__db = Connect()
+        self.__db = self.bot.db
 
         self.is_listening.start()
 

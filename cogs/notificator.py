@@ -10,7 +10,7 @@ from radio import what_plays_on_asiadreamradio
 class Radio_Notify(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
-        self.__db = Connect()
+        self.__db = self.bot.db
         self.send_notification.start()
 
     def is_new_radio_data(self, radio_name: str) -> bool:

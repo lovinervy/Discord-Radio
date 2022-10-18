@@ -15,7 +15,8 @@ extensions = (
 )
 
 class Bot(commands.Bot):
-    def __init__(self):
+    def __init__(self, db):
+        self.db = db
         intents = Intents.all()
         super().__init__(
             command_prefix=commands.when_mentioned_or('>'),
@@ -35,7 +36,7 @@ def main():
     if db.get_radio_activity():
         clear_activity(db)
    
-    bot = Bot()
+    bot = Bot(db)
     bot.run(token)
 
 
