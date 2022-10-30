@@ -1,4 +1,5 @@
 import sqlite3 as sql
+import ast
 from typing import Any, List, Tuple
 
 from my_types.database import lastrowid, radioActivity, sql_command
@@ -45,8 +46,7 @@ class Create_Radio_Tables:
         cmd =   'CREATE TABLE IF NOT EXISTS station_address_params('\
                 'id INTEGER PRIMARY KEY AUTOINCREMENT, '\
                 'station_address_id INTEGER NOT NULL,'\
-                'key TEXT NOT NULL, '\
-                'value TEXT NOT NULL, '\
+                'params TEXT NOT NULL, '\
                 'FOREIGN KEY (station_address_id) REFERENCES station_address(id)'\
                 ');'
         return cmd
@@ -66,8 +66,7 @@ class Create_Radio_Tables:
         cmd =   'CREATE TABLE IF NOT EXISTS scoreboard_address_params('\
                 'id INTEGER PRIMARY KEY AUTOINCREMENT, '\
                 'scoreboard_address_id INTEGER NOT NULL,'\
-                'key TEXT NOT NULL, '\
-                'value TEXT NOT NULL, '\
+                'params TEXT NOT NULL, '\
                 'FOREIGN KEY (scoreboard_address_id) REFERENCES scoreboard_address(id)'\
                 ');'
         return cmd
@@ -132,21 +131,21 @@ class Connect:
         return  self.__normalize_list(raw)
     
     def get_radio_station_address(self, radio_name: str) -> None | StationAddress:
-        cmd = "SELECT url, key, value FROM radio "\
+        cmd = "SELECT url, params FROM radio "\
                 "INNER JOIN station_address ON "\
                     "radio.id = station_address.radio_id AND radio.name = ? "\
                     "INNER JOIN station_address_params ON "\
                         "station_address.id == station_address_params.station_address_id;"
-        raw = self.__execute(cmd, (radio_name, ), "fetchall")
+        raw = self.__execute(cmd, (radio_name, ), "fetchone")
         return self.__normalize_radio_address(raw)
     
     def get_radio_scoreboard_address(self, radio_name: str) -> None | StationScoreboardAddress:
-        cmd = "SELECT url, key, value FROM radio "\
+        cmd = "SELECT url, params FROM radio "\
                 "INNER JOIN scoreboard_address ON "\
                     "radio.id = scoreboard_address.radio_id AND radio.name = ? "\
                     "INNER JOIN scoreboard_address_params ON "\
                         "scoreboard_address.id == scoreboard_address_params.scoreboard_address_id;"
-        raw =  self.__execute(cmd, (radio_name, ), "fetchall")
+        raw =  self.__execute(cmd, (radio_name, ), "fetchone")
         return self.__normalize_radio_scoreboard_address(raw)
     
     def set_radio(self, name: str, url: str, params: dict, scoreboard_url: str = None, scoreboard_params: dict = None) -> None:
@@ -263,21 +262,17 @@ class Connect:
         return [x[0] for x in data]
 
     def __normalize_radio_address(self, data: Tuple[Tuple[str]]) -> StationAddress:
-        if len(data) < 1:
+        if data is None:
             return StationAddress('', {})
-        params = {}
-        url = data[0][0]
-        for el in data:
-            params[el[1]] = el[2]
+        url = data[0]
+        params = ast.literal_eval(data[1])
         return StationAddress(url, params)
 
     def __normalize_radio_scoreboard_address(self, data: Tuple[Tuple[str]]) -> StationScoreboardAddress | None:
-        if len(data) < 1:
+        if data is None:
             return None
-        params = {}
-        url = data[0][0]
-        for el in data:
-            params[el[1]] = el[2]
+        url = data[0]
+        params = ast.literal_eval(data[1])
         return StationScoreboardAddress(url, params)
 
     def __set_radio_address(self, radio_id: int, url: str) -> lastrowid:
@@ -285,18 +280,17 @@ class Connect:
         return self.__execute(cmd, (radio_id, url), 'lastrowid')
 
     def __set_radio_address_params(self, radio_address_id: int, params: dict) -> None:
-        cmd = "INSERT INTO station_address_params(station_address_id, key, value) VALUES(?, ?, ?);"
-        for key, value in params.items():
-            self.__execute(cmd, (radio_address_id, key, value))
+        cmd = "INSERT INTO station_address_params(station_address_id, params) VALUES(?, ?);"
+        self.__execute(cmd, (radio_address_id, str(params)))
     
     def __set_radio_scoreboard_address(self, radio_id: int, url: str) -> lastrowid:
         cmd = "INSERT INTO scoreboard_address(radio_id, url) VALUES(?, ?);"
         return self.__execute(cmd, (radio_id, url), 'lastrowid')
     
     def __set_radio_scoreboard_address_params(self, scoreboard_id: int, params: dict) -> None:
-        cmd  = "INSERT INTO scoreboard_address_params(scoreboard_address_id, key, value) VALUES(?, ?, ?);"
+        cmd  = "INSERT INTO scoreboard_address_params(scoreboard_address_id, params) VALUES(?, ?);"
         for key, value in params.items():
-            self.__execute(cmd, (scoreboard_id, key, value))
+            self.__execute(cmd, (scoreboard_id, str(params)))
     
     def __execute(self, cmd: sql_command, data: tuple = None, method: str = None) -> Any:
         result = ''

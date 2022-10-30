@@ -24,7 +24,7 @@ def setup_db():
         test_base = Connect(db_path=TEST_DB_PATH)
         yield test_base
     finally:
-        os.remove(TEST_DB_PATH)    
+        os.remove(TEST_DB_PATH)
 
 
 def test_set_radio(setup_db):
