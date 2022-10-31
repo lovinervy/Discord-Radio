@@ -289,8 +289,7 @@ class Connect:
     
     def __set_radio_scoreboard_address_params(self, scoreboard_id: int, params: dict) -> None:
         cmd  = "INSERT INTO scoreboard_address_params(scoreboard_address_id, params) VALUES(?, ?);"
-        for key, value in params.items():
-            self.__execute(cmd, (scoreboard_id, str(params)))
+        self.__execute(cmd, (scoreboard_id, str(params)))
     
     def __execute(self, cmd: sql_command, data: tuple = None, method: str = None) -> Any:
         result = ''
