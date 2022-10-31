@@ -3,6 +3,7 @@ import os
 import pytest
 
 from db.database import Connect, radioActivity
+from db.engine import SQLite
 from my_types.radio import Station, StationAddress, StationScoreboardAddress
 
 TEST_DB_PATH = 'tests/test_db.db'
@@ -20,11 +21,10 @@ RADIO_ACTIVITY = radioActivity(STATION_NAME, GUILD_ID, CHANNEL_ID)
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_db():
-    try:
-        test_base = Connect(db_path=TEST_DB_PATH)
-        yield test_base
-    finally:
-        os.remove(TEST_DB_PATH)
+    engine = SQLite(db_path=TEST_DB_PATH)
+    test_base = Connect(engine)
+    yield test_base
+
 
 
 def test_set_radio(setup_db):
