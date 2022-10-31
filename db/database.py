@@ -45,9 +45,8 @@ class Connect(Connector):
             raise BaseException(f'Radio "{name}" exists in database')
         
         radio_id: int = self.execute(self.tables.radio.set, (name,), "lastrowid")
-        print(radio_id)
         address_id: int = self.execute(self.tables.station_address.set, (radio_id, url), "lastrowid")
-        print(address_id, '\n')
+
         self.execute(self.tables.station_address_params.set, (address_id, str(params)))
 
         if scoreboard_url is not None:

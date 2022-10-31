@@ -3,6 +3,7 @@ import logging
 from discord import Intents
 from discord.ext import commands
 
+from db.engine import SQLite
 from db.database import Connect
 from setup import add_radio, clear_activity
 
@@ -30,7 +31,8 @@ class Bot(commands.Bot):
 def main():
     from discord_token import token
 
-    db = Connect()
+    engine = SQLite()
+    db = Connect(engine)
     if not db.get_radio_list():
         add_radio(db)
     if db.get_radio_activity():
