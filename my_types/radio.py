@@ -3,18 +3,21 @@ from dataclasses import dataclass
 
 @dataclass
 class StationAddress:
+    """Station address struct"""
     url: str
     params: dict
 
 
 @dataclass
 class StationScoreboardAddress:
+    """Station scoreboard address struct"""
     url: str
     params: dict
 
 
 @dataclass
 class Station:
+    """Station struct"""
     name: str
     station_address: StationAddress
     scoreboard_address: StationScoreboardAddress
@@ -38,12 +41,6 @@ class MusicInfo:
             f"Duration: {self.duration}\n"\
             f"Composer: {self.composer}"
         return text
-
-    def to_str(self):
-        return self.__str__()
-
-    def __str__(self) -> str:
-        return self.__formatted_text
 
     def __repr__(self) -> str:
         return self.__formatted_text
