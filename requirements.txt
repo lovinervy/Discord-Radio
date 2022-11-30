@@ -1,3 +1,4 @@
 discord.py[voice]
 pytest
 pytest-asyncio
+psycopg2-binary

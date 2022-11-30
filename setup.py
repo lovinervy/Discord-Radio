@@ -1,4 +1,5 @@
 from my_types.radio import Station, StationAddress, StationScoreboardAddress
+from my_types.database import Engine
 
 BASIC_STATIONS = {
     "J-Pop Powerplay Kawaii": Station(
@@ -105,11 +106,12 @@ BASIC_STATIONS = {
     )
 }
 
-def add_radio(db):
-    radio_list = db.get_radio_list()
+def add_radio(connector: Engine):
+    """Func to add basic radiostation into database"""
+    radio_list = connector.get_radio_list()
     for radio, data in BASIC_STATIONS.items():
         if radio not in radio_list:
-            db.set_radio(
+            connector.set_radio(
                 radio,
                 data.station_address.url,
                 data.station_address.params,
@@ -117,7 +119,8 @@ def add_radio(db):
                 data.scoreboard_address.params
             )
 
-def clear_activity(db):
-    activity_list = db.get_radio_activity()
+def clear_activity(connector: Engine):
+    """Func to clear radio activity table"""
+    activity_list = connector.get_radio_activity()
     for activity in activity_list:
-        db.delete_radio_activity(activity.guild_id)
+        connector.delete_radio_activity(activity.guild_id)
